@@ -76,9 +76,10 @@ export function useWeatherApp() {
   const [sortType, setSortType] = useState(null);
   const [targetTemp, setTargetTemp] = useState(20);
   const [nativeCityInput, setNativeCityInput] = useState("");
+  const [countryFilter, setCountryFilter] = useState("all");
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
@@ -220,8 +221,31 @@ export function useWeatherApp() {
     [searchQuery],
   );
 
+  const availableCountries = useMemo(() => {
+    const codes = new Set();
+    for (const city of weatherData) {
+      const code = city.sys?.country;
+      if (code) codes.add(code);
+    }
+    return [...codes].sort((a, b) => a.localeCompare(b, "fr"));
+  }, [weatherData]);
+
+  useEffect(() => {
+    if (
+      countryFilter !== "all" &&
+      !availableCountries.includes(countryFilter)
+    ) {
+      setCountryFilter("all");
+    }
+  }, [availableCountries, countryFilter]);
+
   const sorted = useMemo(() => {
     const filtered = weatherData.filter((city) => {
+      if (countryFilter !== "all") {
+        const code = city.sys?.country ?? "";
+        if (code !== countryFilter) return false;
+      }
+
       if (!normalizedSearchQuery) return true;
 
       const cityName = normalizeText(city.name ?? "");
@@ -245,7 +269,13 @@ export function useWeatherApp() {
       }
       return 0;
     });
-  }, [weatherData, normalizedSearchQuery, sortType, targetTemp]);
+  }, [
+    weatherData,
+    normalizedSearchQuery,
+    countryFilter,
+    sortType,
+    targetTemp,
+  ]);
 
   const totalPages = useMemo(
     () => Math.ceil(sorted.length / ITEMS_PER_PAGE),
@@ -282,6 +312,11 @@ export function useWeatherApp() {
 
   const handleNativeCityInputChange = useCallback((value) => {
     setNativeCityInput(value);
+  }, []);
+
+  const handleCountryFilterChange = useCallback((value) => {
+    setCountryFilter(value);
+    setCurrentPage(1);
   }, []);
 
   const handleAddNativeCity = useCallback(
@@ -335,6 +370,8 @@ export function useWeatherApp() {
     error,
     searchQuery,
     nativeCityInput,
+    countryFilter,
+    availableCountries,
     sortType,
     targetTemp,
     paginated,
@@ -348,5 +385,6 @@ export function useWeatherApp() {
     handleSearchSubmit,
     handleNativeCityInputChange,
     handleAddNativeCity,
+    handleCountryFilterChange,
   };
 }

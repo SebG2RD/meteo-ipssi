@@ -1,35 +1,47 @@
-import styles from "./Pagination.module.css";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
   if (totalPages <= 1) return null;
 
   return (
-    <div className={styles.pagination}>
-      <button
-        className={styles.btn}
-        onClick={() => onPageChange(currentPage - 1)}
+    <div className="flex flex-wrap justify-center gap-1 py-6">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon-sm"
         disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+        aria-label="Page précédente"
       >
-        ←
-      </button>
+        <ChevronLeft className="size-4" />
+      </Button>
 
       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-        <button
+        <Button
           key={page}
-          className={`${styles.btn} ${currentPage === page ? styles.active : ""}`}
+          type="button"
+          variant={currentPage === page ? "default" : "outline"}
+          size="icon-sm"
           onClick={() => onPageChange(page)}
+          aria-label={`Page ${page}`}
+          aria-current={currentPage === page ? "page" : undefined}
         >
           {page}
-        </button>
+        </Button>
       ))}
 
-      <button
-        className={styles.btn}
-        onClick={() => onPageChange(currentPage + 1)}
+      <Button
+        type="button"
+        variant="outline"
+        size="icon-sm"
         disabled={currentPage === totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+        aria-label="Page suivante"
       >
-        →
-      </button>
+        <ChevronRight className="size-4" />
+      </Button>
     </div>
   );
 }

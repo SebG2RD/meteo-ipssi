@@ -1,122 +1,144 @@
-# Presentation orale - 5 minutes (plan slide par slide)
+# Présentation orale — 5 minutes (plan slide par slide)
 
-## Slide 1 - Titre et contexte (30 sec)
-
-**Titre :** TP React Avance - Dashboard Meteo  
-**Message cle :** "J'ai construit une application React qui consomme une API meteo et propose une interface complete (recherche, tri, pagination, graphique, theme)."
-
-**A dire a l'oral :**
-- Le projet est base sur React + Vite.
-- L'objectif est de pratiquer des notions avancees de front-end.
-- J'ai aussi travaille l'architecture et l'optimisation.
+**Note :** nous étions **trois** sur ce projet — parlez au **nous** à l’oral (équipe), pas au **je**.
 
 ---
 
-## Slide 2 - Objectifs du projet (35 sec)
+## Slide 1 — Titre et contexte (30 s)
 
-**Message cle :** "Le projet combine apprentissage technique et besoins utilisateur."
+**Titre :** TP React avancé — Dashboard météo  
 
-**Points a afficher :**
-- Appel API externe avec `axios`
-- Affichage de donnees complexes via composants
-- Recherche mondiale de villes
-- Pagination + tri + graphique
-- Optimisation (memoization + lazy loading)
+**Message clé :** « **Nous avons réalisé** une application React qui interroge OpenWeatherMap et propose une interface complète : recherche mondiale, filtre par pays, tri, pagination, graphique et thème clair / sombre, avec une UI basée sur shadcn/ui. »
 
-**A dire a l'oral :**
-- J'ai voulu aller au-dela du minimum en ajoutant une vraie experience utilisateur.
+**À dire à l’oral :**
+
+- **Nous** étions trois sur ce travail ; chacun a pu contribuer sur des parties du code et de l’interface.
+- Stack : **React 19**, **Vite**, **Tailwind** et composants **shadcn/ui**.
+- Objectif : allier **notions avancées** (API, état, perf) et **expérience utilisateur** soignée.
 
 ---
 
-## Slide 3 - Fonctionnalites principales (45 sec)
+## Slide 2 — Objectifs du projet (35 s)
 
-**Message cle :** "L'application couvre tout le cycle d'usage."
+**Message clé :** « Le projet combine apprentissage technique et produit utilisable. »
 
-**Points a afficher :**
-- 8 villes chargees au demarrage
-- Cache localStorage pour accelerer le chargement
-- Recherche sur Entree (villes mondiales)
-- Ajout de ville native (affichee en premier)
-- Theme Soft / Dark
+**Points à afficher :**
 
-**A dire a l'oral :**
-- Si l'utilisateur vide la recherche, on revient proprement a l'affichage natif.
-- Les cartes gardent une largeur cohérente pour un rendu propre.
+- Appels HTTP avec **axios** (météo + géocodage).
+- Données riches affichées en **composants** (cartes, graphique).
+- **Filtres** : texte + **pays** (codes ISO présents dans les données).
+- **Tri**, **pagination**, **Recharts**.
+- **Optimisation** : `useMemo`, `useCallback`, **lazy loading** de certains modules.
+
+**À dire à l’oral :**
+
+- **Nous** sommes allés au-delà du minimum du TP grâce au filtre pays et à la couche UI professionnelle.
 
 ---
 
-## Slide 4 - Architecture du code (50 sec)
+## Slide 3 — Fonctionnalités principales (45 s)
 
-**Message cle :** "J'ai decompose le projet pour qu'il reste maintenable."
+**Message clé :** « L’app couvre un parcours utilisateur cohérent du chargement à l’analyse. »
 
-**A afficher :**
-- `App.jsx` : orchestration de l'interface
-- `hooks/useWeatherApp.js` : logique metier (API, cache, tri, pagination, handlers)
-- `components/*` : composants UI reutilisables
+**Points à afficher :**
+
+- **8 villes** au démarrage + **localStorage** pour accélérer le retour sur la page.
+- Recherche **monde** (validation **Entrée**).
+- **Filtre pays** (liste dérivée des villes affichées).
+- Ajout d’une ville au **jeu natif** (en tête + sauvegarde cache).
+- **Grille 2 × 2** pleine largeur pour les cartes (alignée avec le reste de la page).
+- Thème **clair / sombre** mémorisé.
+
+**À dire à l’oral :**
+
+- Vider la recherche ramène à la liste **native** sans cumuler les résultats de recherche.
+
+---
+
+## Slide 4 — Architecture du code (50 s)
+
+**Message clé :** « Code découpé pour rester lisible et maintenable. »
+
+**À afficher :**
+
+- `App.jsx` : **orchestration** (peu de logique).
+- `useWeatherApp.js` : **API**, cache, filtres, tri, pagination, thème.
+- `components/` : barre de recherche, **CountryFilter**, cartes, graphique…
+- `components/ui/` : **shadcn/ui** (Button, Card, Select, etc.).
 
 **Extrait court :**
+
 ```jsx
 const {
-  loading, error, paginated, sorted,
-  handleSearch, handleAddNativeCity
+  countryFilter,
+  availableCountries,
+  sorted,
+  paginated,
+  handleCountryFilterChange,
 } = useWeatherApp();
 ```
 
-**A dire a l'oral :**
-- Cette separation rend `App.jsx` plus court et plus lisible.
+**À dire à l’oral :**
+
+- Un **hook** central évite un `App.jsx` de plusieurs centaines de lignes.
 
 ---
 
-## Slide 5 - Exemple technique API (55 sec)
+## Slide 5 — Exemple technique : API (55 s)
 
-**Message cle :** "La recherche mondiale se fait en deux etapes."
+**Message clé :** « La recherche mondiale = géocodage puis météo. »
 
-**A afficher :**
-1. Geocodage (`/geo/1.0/direct`)  
-2. Meteo detaillee (`/data/2.5/weather`)
+**À afficher :**
+
+1. `GET .../geo/1.0/direct` — candidats (ville, pays…).
+2. `GET .../data/2.5/weather` — détail par lat/lon.
 
 **Extrait court :**
+
 ```jsx
 const geoResponse = await axios.get(
   "https://api.openweathermap.org/geo/1.0/direct",
-  { params: { q: query, limit: 8, appid: API_KEY } }
+  { params: { q: query, limit: 8, appid: API_KEY } },
 );
 ```
 
-**A dire a l'oral :**
-- Cette approche permet de rechercher des villes partout, pas seulement une liste fixe.
+**À dire à l’oral :**
+
+- Le filtre **pays** s’applique côté client sur `sys.country` après chargement des données.
 
 ---
 
-## Slide 6 - Performance et qualite (45 sec)
+## Slide 6 — UI (shadcn) et performance (45 s)
 
-**Message cle :** "J'ai optimise pour garder une app fluide."
+**Message clé :** « UX cohérente + chargement raisonnable. »
 
-**A afficher :**
-- `useMemo` pour filtrage/tri/pagination
-- `useCallback` pour stabiliser les handlers
-- `React.lazy` + `Suspense` pour charger certains composants a la demande
-- `npm run lint` et `npm run build` pour valider la qualite
+**À afficher :**
 
-**A dire a l'oral :**
-- Le lazy loading allege le chargement initial.
-- La memoization evite des recalculs inutiles.
+- **shadcn/ui** + **Tailwind** : formulaires, cartes, **Select** pour le pays, états de chargement (Skeleton).
+- Thème **dark** sur `<html>` pour variables CSS du design system.
+- `useMemo` sur la liste filtrée / triée (dépendances : données, recherche, **pays**, tri).
+- `React.lazy` + `Suspense` pour pagination, tri avancé, graphique.
+
+**À dire à l’oral :**
+
+- Moins de CSS custom ; le graphique reste la partie la plus lourde, chargée à la demande.
 
 ---
 
-## Slide 7 - Bilan et perspectives (40 sec)
+## Slide 7 — Bilan et perspectives (40 s)
 
-**Message cle :** "Le projet est fonctionnel, structure, et evolutif."
+**Message clé :** « Projet abouti, structuré, ouvert aux extensions. »
 
 **Bilan :**
-- Fonctionnalites completees
-- UX amelioree (theme, ajout natif, recherche fiable)
-- Code mieux organise
+
+- Fonctionnalités TP + **filtre pays** + **UI shadcn**.
+- Séparation hook / vues ; lint et build au vert.
 
 **Perspectives :**
-- Ajouter suppression de ville native
-- Ajouter TTL sur le cache
-- Ajouter tests unitaires sur `useWeatherApp`
 
-**Conclusion orale (phrase finale) :**
-"Ce projet m'a permis de consolider React sur un cas concret, en combinant logique metier, UI, optimisation et qualite de code."
+- TTL sur le cache ; suppression d’une ville du jeu natif.
+- Tests sur `useWeatherApp` ; noms de pays lisibles (FR → France) via une petite table.
+
+**Phrase de conclusion :**
+
+« Ce projet **nous** a permis de consolider React sur un cas concret : API, état, filtres, design system et bonnes pratiques de performance. »

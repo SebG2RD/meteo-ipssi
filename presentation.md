@@ -1,38 +1,50 @@
-# Presentation du projet - Dashboard Meteo React
+# Présentation du projet — Dashboard météo React
 
-## 1) A quoi sert ce projet ?
+**Contexte :** ce projet a été **réalisé à trois**. Dans la suite, **nous** désigne notre équipe de trois personnes.
 
-Ce projet est une application web qui affiche la meteo de plusieurs villes sous forme de cartes.
+---
 
-Il sert a apprendre des notions React importantes :
-- faire des appels API,
-- gerer des etats,
-- organiser une interface en composants,
-- optimiser les performances.
+## 1) À quoi sert ce projet ?
 
-En pratique, un utilisateur peut :
-- voir une liste de villes au demarrage,
-- rechercher des villes dans le monde,
-- ajouter des villes favorites dans l'affichage natif,
-- trier et paginer les resultats,
-- basculer entre un theme `soft` et `dark`.
+Nous avons développé une application web qui affiche la météo de plusieurs villes sous forme de **cartes**, avec un **graphique** de comparaison des températures.
 
-## 2) Vue globale de l'architecture
+Elle nous a permis de mettre en pratique des notions React importantes :
 
-Le projet est decoupe en 3 couches simples :
+- appels API et gestion du chargement / des erreurs ;
+- état local et découpage en composants ;
+- **interface soignée** avec une bibliothèque de composants (shadcn/ui) ;
+- optimisations de rendu et de bundle.
 
-1. **UI principale** : `App.jsx`  
-   Assemble les composants et affiche les donnees.
+En pratique, l’utilisateur peut :
 
-2. **Logique metier** : `hooks/useWeatherApp.js`  
-   Gere API, cache, tri, pagination, recherche et ajout de ville.
+- voir **8 villes** au chargement (avec reprise depuis le **cache navigateur** si disponible) ;
+- **rechercher** des villes dans le monde (validation avec **Entrée**) ;
+- **filtrer par pays** (codes ISO présents dans les données affichées) ;
+- **ajouter** une ville à l’affichage « natif » (elle apparaît en tête de liste enregistrée) ;
+- **trier** (température croissante / décroissante / proximité d’une cible °C) ;
+- **paginer** (4 villes par page, grille **2 × 2** sur la largeur du contenu) ;
+- consulter un **graphique** (Recharts) ;
+- basculer **thème clair / sombre** (classe `dark` sur la racine HTML, persistance locale).
 
-3. **Composants** : `components/*` et `header/navbar/*`  
-   S'occupent du rendu visuel (cards, barre de recherche, boutons, graphique...).
+---
 
-## 3) Extrait cle : App simplifie
+## 2) Vue globale de l’architecture
 
-`App.jsx` reste volontairement court grace au hook metier :
+Le projet repose sur **trois niveaux** :
+
+1. **`App.jsx`** — Assemble l’interface : navbar, barre d’outils (recherche, ajout, filtre pays, tri), liste de cartes, pagination, graphique. Reste court car la logique vit dans un hook.
+
+2. **`hooks/useWeatherApp.js`** — Logique métier : appels OpenWeatherMap, `localStorage` pour le cache météo et le thème, filtres (texte + pays), tri, pagination, handlers.
+
+3. **`components/*`** — Composants « métier » (SearchBar, CountryFilter, WeatherCard, etc.).
+
+4. **`components/ui/*`** — Primitives **[shadcn/ui](https://ui.shadcn.com/)** (Button, Input, Card, Select, Badge, Skeleton…), stylées avec **Tailwind CSS v4**.
+
+---
+
+## 3) Extrait clé : `App.jsx` allégé
+
+`App.jsx` délègue l’état et les actions au hook :
 
 ```jsx
 const {
@@ -42,6 +54,8 @@ const {
   error,
   searchQuery,
   nativeCityInput,
+  countryFilter,
+  availableCountries,
   paginated,
   sorted,
   totalPages,
@@ -49,18 +63,19 @@ const {
   setCurrentPage,
   handleSearch,
   handleSearchSubmit,
-  handleNativeCityInputChange,
+  handleCountryFilterChange,
   handleAddNativeCity,
+  // … tri, etc.
 } = useWeatherApp();
 ```
 
-**Utilite :**  
-On separe clairement la logique et l'affichage.  
-Resultat : code plus lisible, plus maintenable, et plus facile a faire evoluer.
+**Intérêt :** séparation nette **logique / présentation**, fichiers plus lisibles et plus simples à faire évoluer.
 
-## 4) Extrait cle : chargement initial (cache + API)
+---
 
-Dans `useWeatherApp.js`, le flux est :
+## 4) Extrait clé : chargement initial (cache + API)
+
+Si des données valides sont dans `localStorage`, **nous** les affichons tout de suite ; sinon **nous** chargeons les 8 villes par défaut puis **nous** mettons le cache à jour.
 
 ```jsx
 const cachedWeather = getCachedWeather();
@@ -71,18 +86,13 @@ if (cachedWeather && cachedWeather.length > 0) {
 }
 ```
 
-Puis, si le cache est vide, l'application fait les appels API des villes par defaut.
+**Intérêt :** moins d’attente et moins d’appels réseau au rechargement de la page.
 
-**Utilite :**
-- chargement plus rapide si des donnees existent deja,
-- moins d'appels reseau inutiles.
+---
 
-## 5) Extrait cle : recherche mondiale
+## 5) Extrait clé : recherche mondiale
 
-La recherche se fait en 2 etapes :
-
-1. geocodage (`geo/1.0/direct`) pour trouver les correspondances,
-2. meteo (`data/2.5/weather`) pour recuperer les details de chaque ville.
+La recherche utilise d’abord le **géocodage**, puis la météo par coordonnées :
 
 ```jsx
 const geoResponse = await axios.get(
@@ -91,38 +101,86 @@ const geoResponse = await axios.get(
 );
 ```
 
-**Utilite :**
-- la recherche n'est pas limitee a une liste fixe,
-- elle couvre des villes du monde entier.
+**Intérêt :** pas de liste de villes figée : l’utilisateur peut cibler des endroits partout dans le monde (avec précision du pays si besoin, ex. `Springfield, US`).
 
-## 6) Extrait cle : optimisation performance
+---
 
-Le tri + filtre sont memoises :
+## 6) Extrait clé : filtre par pays
+
+Les pays proposés sont **dérivés des données** (`sys.country`). Le filtre se combine avec la recherche texte.
+
+```jsx
+const availableCountries = useMemo(() => {
+  const codes = new Set();
+  for (const city of weatherData) {
+    const code = city.sys?.country;
+    if (code) codes.add(code);
+  }
+  return [...codes].sort((a, b) => a.localeCompare(b, "fr"));
+}, [weatherData]);
+```
+
+Dans la chaîne de filtrage, si un pays est choisi (autre que « Tous »), on ne garde que les villes de ce code ISO.
+
+**Intérêt :** filtre pertinent et toujours **à jour** avec l’ensemble affiché.
+
+---
+
+## 7) Extrait clé : interface avec shadcn/ui
+
+Les champs, boutons, cartes et le sélecteur de pays utilisent des composants shadcn (souvent basés sur **Base UI** + **Tailwind**), par exemple un `Select` pour le pays :
+
+```jsx
+<Select value={value} onValueChange={onChange}>
+  <SelectTrigger className="h-10 w-full">
+    <SelectValue placeholder="Tous les pays" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">Tous les pays</SelectItem>
+    {countries.map((code) => (
+      <SelectItem key={code} value={code}>{code}</SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
+
+**Intérêt :** UX homogène (focus, contrastes, thème clair/sombre), moins de CSS « maison » à maintenir.
+
+---
+
+## 8) Extrait clé : optimisations
+
+Le pipeline **filtre → tri** est recalculé seulement quand les entrées utiles changent :
 
 ```jsx
 const sorted = useMemo(() => {
-  // filtrage + tri
-}, [weatherData, normalizedSearchQuery, sortType, targetTemp]);
+  // filtre pays, filtre texte, tri…
+}, [
+  weatherData,
+  normalizedSearchQuery,
+  countryFilter,
+  sortType,
+  targetTemp,
+]);
 ```
 
-Et certains composants sont charges en lazy loading :
+Certains blocs lourds sont chargés à la demande :
 
 ```jsx
 const WeatherChart = lazy(() => import("./components/WeatherChart"));
 ```
 
-**Utilite :**
-- moins de recalculs React,
-- bundle initial plus leger.
+**Intérêt :** moins de recalculs inutiles et bundle initial plus léger.
 
-## 7) Valeur du projet
+---
 
-Ce projet montre un cas realiste de front-end moderne :
-- consommation d'API externe,
-- UX complete (recherche, tri, pagination, themes),
-- optimisation et architecture propre.
+## 9) Valeur du projet
 
-Il constitue une bonne base pour evoluer vers :
-- tests unitaires,
-- TypeScript,
-- gestion d'etat plus avancee si besoin.
+Pour **nous**, ce travail illustre un cas d’usage réaliste de front-end moderne :
+
+- consommation d’**API externe** documentée ;
+- **UX** complète (recherche, pays, tri, pagination, graphique, thème) ;
+- **design system** (shadcn/ui) et **Tailwind** ;
+- **architecture** claire (hook + composants) et **qualité** (lint, build).
+
+**Pistes d’évolution** que nous envisageons : tests sur `useWeatherApp`, TTL pour le cache, suppression d’une ville du jeu natif, internationalisation des libellés de pays, etc.

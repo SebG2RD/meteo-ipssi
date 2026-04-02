@@ -1,14 +1,20 @@
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
+  BarChart,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
-import styles from "./WeatherChart.module.css";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 function WeatherChart({ data }) {
   const chartData = data.map((city) => ({
@@ -19,31 +25,58 @@ function WeatherChart({ data }) {
   }));
 
   return (
-    <div className={styles.container}>
-      <h2 className={styles.title}>Comparaison des températures</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          data={chartData}
-          margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="name" tick={{ fill: "var(--text)", fontSize: 12 }} />
-          <YAxis unit="°C" tick={{ fill: "var(--text)", fontSize: 12 }} />
-          <Tooltip
-            formatter={(value) => `${value}°C`}
-            contentStyle={{
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              borderRadius: "8px",
-            }}
-          />
-          <Legend />
-          <Bar dataKey="Température" fill="#aa3bff" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Min" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Max" fill="#f87171" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <Card className="mt-8">
+      <CardHeader>
+        <CardTitle>Comparaison des températures</CardTitle>
+      </CardHeader>
+      <CardContent className="pl-0 sm:pl-2">
+        <div className="h-[300px] w-full min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 8, right: 16, left: 0, bottom: 8 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border)"
+              />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+              />
+              <YAxis
+                unit="°C"
+                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+              />
+              <Tooltip
+                formatter={(value) => [`${value}°C`, ""]}
+                contentStyle={{
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-lg)",
+                }}
+              />
+              <Legend />
+              <Bar
+                dataKey="Température"
+                fill="var(--chart-1)"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="Min"
+                fill="var(--chart-2)"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="Max"
+                fill="var(--chart-3)"
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

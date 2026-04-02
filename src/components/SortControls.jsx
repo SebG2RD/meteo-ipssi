@@ -1,38 +1,49 @@
-import styles from "./SortControls.module.css";
+import { ArrowDown, ArrowUp, Target } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 function SortControls({ sortType, setSortType, targetTemp, setTargetTemp }) {
   const toggle = (type) => setSortType(sortType === type ? null : type);
 
   return (
-    <div className={styles.controls}>
-      <button
-        className={`${styles.btn} ${sortType === "asc" ? styles.active : ""}`}
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        type="button"
+        variant={sortType === "asc" ? "default" : "outline"}
+        size="sm"
         onClick={() => toggle("asc")}
       >
-        🌡️ Croissant
-      </button>
-      <button
-        className={`${styles.btn} ${sortType === "desc" ? styles.active : ""}`}
+        <ArrowUp className="size-3.5" />
+        Croissant
+      </Button>
+      <Button
+        type="button"
+        variant={sortType === "desc" ? "default" : "outline"}
+        size="sm"
         onClick={() => toggle("desc")}
       >
-        🌡️ Décroissant
-      </button>
-      <div className={styles.proximity}>
-        <button
-          className={`${styles.btn} ${sortType === "proximity" ? styles.active : ""}`}
+        <ArrowDown className="size-3.5" />
+        Décroissant
+      </Button>
+      <div className="border-border flex items-center gap-1 rounded-lg border px-1.5 py-0.5">
+        <Button
+          type="button"
+          variant={sortType === "proximity" ? "default" : "ghost"}
+          size="sm"
           onClick={() => toggle("proximity")}
         >
-          🎯 Proximité
-        </button>
-        <div className={styles.targetInput}>
-          <input
-            type="number"
-            value={targetTemp}
-            onChange={(e) => setTargetTemp(Number(e.target.value))}
-            className={styles.input}
-          />
-          <span className={styles.unit}>°C</span>
-        </div>
+          <Target className="size-3.5" />
+          Proximité
+        </Button>
+        <Input
+          type="number"
+          className="h-8 w-14 border-0 bg-transparent px-1 text-center shadow-none focus-visible:ring-0"
+          value={targetTemp}
+          onChange={(e) => setTargetTemp(Number(e.target.value))}
+          aria-label="Température cible en °C"
+        />
+        <span className="text-muted-foreground pr-1 text-xs">°C</span>
       </div>
     </div>
   );
