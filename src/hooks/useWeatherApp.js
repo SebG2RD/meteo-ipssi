@@ -92,7 +92,11 @@ export function useWeatherApp() {
     const controller = new AbortController();
 
     const fetchDefaultCities = async () => {
+      const timerLabel = "[Perf] Chargement initial";
+      let timerStarted = false;
       try {
+        console.time(timerLabel);
+        timerStarted = true;
         setLoading(true);
         setError(null);
 
@@ -136,6 +140,9 @@ export function useWeatherApp() {
         if (axios.isCancel(err)) return;
         setError("Erreur réseau pendant le chargement initial.");
       } finally {
+        if (timerStarted) {
+          console.timeEnd(timerLabel);
+        }
         setLoading(false);
       }
     };
@@ -155,7 +162,11 @@ export function useWeatherApp() {
     const controller = new AbortController();
 
     const fetchCities = async () => {
+      const timerLabel = `[Perf] Recherche: ${query}`;
+      let timerStarted = false;
       try {
+        console.time(timerLabel);
+        timerStarted = true;
         setLoading(true);
         setError(null);
 
@@ -208,6 +219,9 @@ export function useWeatherApp() {
         }
         setError("Erreur réseau pendant la recherche de ville.");
       } finally {
+        if (timerStarted) {
+          console.timeEnd(timerLabel);
+        }
         setLoading(false);
       }
     };
